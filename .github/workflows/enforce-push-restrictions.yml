@@ -1,0 +1,19 @@
+name: Enforce Push Restrictions
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  enforce-restrictions:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check Author
+        run: |
+          AUTHOR=$(git log -1 --pretty=format:"%an")
+          if [ "$AUTHOR" != "thl3vpn" ]; then
+            echo "Pushes to main branch are restricted to specific-user."
+            exit 1
+          fi
