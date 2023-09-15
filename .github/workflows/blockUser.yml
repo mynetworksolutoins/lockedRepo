@@ -10,10 +10,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Check Out Repository
+        uses: actions/checkout@v2
+
       - name: Check Author
         run: |
           AUTHOR=$(git log -1 --pretty=format:"%an")
-          if [ "$AUTHOR" != "specific-user" ]; then
+          if [ "$AUTHOR" != "THL3VPN" ]; then
             echo "Pushes to main branch are restricted to specific-user."
             exit 1
           fi
