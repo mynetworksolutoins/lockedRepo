@@ -7,7 +7,7 @@ on:
 
 jobs:
   enforce-restrictions:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-bionic
 
     steps:
       - name: Check Out Repository
