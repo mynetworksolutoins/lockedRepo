@@ -1,19 +1,40 @@
-name: Enforce Push Restrictions
+name: Restrict Folder Access
 
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - '/user1_file'  # path to the restricted folder
 
 jobs:
-  enforce-restrictions:
+  restrict_access:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check Author
-        run: |
-          AUTHOR=$(git log -1 --pretty=format:"%an")
-          if [ "$AUTHOR" != "THL3VPN" ]; then
-            echo "Pushes to main branch are restricted to specific-user."
-            exit 1
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Check if user is allowed
+      run: |
+        ALLOWED_USERS=("THL3VPN")  # Modify these usernames
+        PR_AUTHOR="${{ github.actor }}"
+
+        for user in "${ALLOWED_USERS[@]}"; do
+          if [[ $user == $PR_AUTHOR ]]; then
+            echo "$PR_AUTHOR is an allowed user. Proceeding..."
+            exit 0
           fi
+        done
+        echo "Unauthorized changes detected in restricted folder by $PR_AUTHOR."
+        exit 1
+
+    - name: Close unauthorized PR
+      if: failure()
+      run: |
+        gh pr close ${{ github.event.pull_request.number }} --delete-branch
+        echo "PR closed because of unauthorized changes to 'restricted_folder' by $PR_AUTHOR."
+
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
