@@ -3,7 +3,7 @@ name: Enforce Push Restrictions
 on:
   push:
     branches:
-      - main
+      - dev2
 
 jobs:
   enforce-restrictions:
@@ -16,7 +16,7 @@ jobs:
       - name: Check Author
         run: |
           AUTHOR=$(git log -1 --pretty=format:"%an")
-          if [ "$AUTHOR" != "THL3VPN" ]; then
+          if [ "$AUTHOR" != "johntmoy13" ]; then
             echo "Pushes to main branch are restricted to specific-user."
             exit 1
           fi
