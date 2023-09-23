@@ -1,0 +1,80 @@
+name: Restrict Folder Access
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - 'user_file1/**'  # path to the restricted folder
+
+jobs:
+  restrict_access:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Check if user is allowed
+      id: check_author
+      run: |
+        ALLOWED_USERS=("THL3VPN")
+        PR_AUTHOR="${{ github.actor }}"
+        AUTHORIZED="false"
+
+        for user in "${ALLOWED_USERS[@]}"; do
+          if [[ $user == $PR_AUTHOR ]]; then
+            echo "$PR_AUTHOR is an allowed user. Proceeding..."
+            AUTHORIZED="true"
+            echo "AUTHORIZED=true" >> $GITHUB_ENV
+            echo "::set-output name=authorized::true"
+            exit 0
+          fi
+        done
+        
+        echo "::set-output name=authorized::false"
+
+    - name: Handle unauthorized access
+      if: env.AUTHORIZED == 'false'
+      run: |
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          gh pr close ${{ github.event.pull_request.number }} 
+          echo "PR closed because of unauthorized changes to 'restricted_folder' by $PR_AUTHOR."
+        else
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          CURRENT_SHA=$(git rev-parse HEAD)
+          git checkout -b revert_changes_branch
+          git reset --hard ${{ github.event.before }}
+          git checkout ${{ github.ref }}
+          git revert --no-commit ${{ github.event.before }}..$CURRENT_SHA
+          git commit -m "Revert unauthorized commits"
+          git push origin ${{ github.ref }}
+          echo "Commit(s) reverted due to unauthorized changes to 'restricted_folder' by $PR_AUTHOR."
+        fi
+      env:
+        GH_TOKEN: ${{ secrets.TEMI1SECRET }}
+
+    - name: Comment atlantis lock if unauthorized
+      if: env.AUTHORIZED == 'false'
+      uses: actions/github-script@v3
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          github.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: 'atlantis lock'
+          });
+
+  atlantis_job:
+    needs: restrict_access # Ensure this job runs after the restrict_access job
+    runs-on: ubuntu-latest
+    if: needs.restrict_access.outputs.check_author.authorized == 'true'
+    steps:
+    - name: Run Atlantis
+      run: |
+        # Your Atlantis commands here
