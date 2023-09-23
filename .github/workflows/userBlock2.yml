@@ -7,7 +7,7 @@ on:
       - synchronize
       - reopened
     paths:
-      - 'user/dev/**'  # path to the restricted folder
+      - 'user_file1/**'  # path to the restricted folder
 
 jobs:
   restrict_access:
@@ -19,7 +19,7 @@ jobs:
     - name: Check if user is allowed
       id: check_author
       run: |
-        ALLOWED_USERS=("temidevops1" "gsa-salamancc")
+        ALLOWED_USERS=("THL3VPN")
         PR_AUTHOR="${{ github.actor }}"
         AUTHORIZED="false"
 
