@@ -7,7 +7,7 @@ on:
       - synchronize
       - reopened
     paths:
-      - 'terraform/dev/**'  # path to the restricted folder
+      - 'user/dev/**'  # path to the restricted folder
 
 jobs:
   restrict_access:
