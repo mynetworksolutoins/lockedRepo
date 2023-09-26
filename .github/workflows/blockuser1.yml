@@ -1,0 +1,68 @@
+name: Restrict Folder Access
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - 'user1_file1/**'  # path to the restricted folder
+
+jobs:
+  restrict_access:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Check if user is allowed
+      run: |
+        ALLOWED_USERS=("THL3VPN")  # Modify these usernames
+        PR_AUTHOR="${{ github.actor }}"
+
+        for user in "${ALLOWED_USERS[@]}"; do
+          if [[ $user == $PR_AUTHOR ]]; then
+            echo "$PR_AUTHOR is an allowed user. Proceeding..."
+            exit 0
+          fi
+        done
+        echo "Unauthorized changes detected in restricted folder by $PR_AUTHOR."
+        exit 1
+
+    - name: Handle unauthorized access
+      if: failure()
+      run: |
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          gh pr close ${{ github.event.pull_request.number }} 
+          echo "PR closed because of unauthorized changes to 'restricted_folder' by $COMMIT_AUTHOR."
+        else
+          # Setup git user
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Save the current SHA (from after the push)
+          CURRENT_SHA=$(git rev-parse HEAD)
+          
+          # Create a new branch for the revert
+          git checkout -b revert_changes_branch
+          
+          # Reset to the commit before the push
+          git reset --hard ${{ github.event.before }}
+          
+          # Checkout the main branch again
+          git checkout ${{ github.ref }}
+          
+          # Revert all commits from the push
+          git revert --no-commit ${{ github.event.before }}..$CURRENT_SHA
+          
+          # Commit the reverted changes
+          git commit -m "Revert unauthorized commits"
+          
+          # Push the changes back to the repository
+          git push origin ${{ github.ref }}
+          
+          echo "Commit(s) reverted due to unauthorized changes to 'restricted_folder' by $COMMIT_AUTHOR."
+        fi
+      env:
+        GH_TOKEN: ${{ secrets.THL3VPNSECRET }}
