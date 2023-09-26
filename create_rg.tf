@@ -13,6 +13,6 @@ provider "azurerm" {
 }
 
 resource "azurerm_resource_group" "TRG_TF_RG1" {
-  name     = "TRG_TF_RG1"
+  name     = "TRG_TF_RG2"
   location = "East US"
 }
