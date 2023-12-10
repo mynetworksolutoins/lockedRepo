@@ -1,7 +1,7 @@
 provider "aws" {
   region = "us-east-1"
-  access_key = "ABC123"
-  secret_key = "ABC123"
+  access_key = "ABC123XS6TRSEPNEJI6B"
+  secret_key = "ABC1236+Uumo1lyg/6ReTIePUDGgA3f78rUPkomh"
 }
 
 #IP Target Group
